@@ -10,6 +10,7 @@ bp = Blueprint("proxy_bp", __name__)
 
 location_key = os.environ.get("LOCATION_KEY")
 weather_key = os.environ.get("WEATHER_KEY")
+timezone_key = os.environ.get("TIMEZONEDB_KEY")
 
 @bp.get("/location")
 def get_lat_lon():
@@ -34,7 +35,21 @@ def get_weather():
 
     response = requests.get(
         "https://api.openweathermap.org/data/2.5/weather",
-        params={"lat": lat_query, "lon": lon_query, "appid": weather_key}
+        params={"lat": lat_query, "lon": lon_query, "appid": weather_key, "units": "imperial"}
     )
     return response.json(), 200
 
+@bp.get("/timezone")
+def get_timezone():
+    lat_query = request.args.get("lat")
+    lon_query = request.args.get("lng")
+
+    if not lat_query or not lon_query:
+        return {"message": "must provide lat and lng parameters"}, 400
+
+    response = requests.get(
+            "http://api.timezonedb.com/v2.1/get-time-zone",
+            params={"key": timezone_key, "by": "position", "lat": lat_query, "lng": lon_query, "format": "json",}
+        )
+
+    return response.json(), 200
